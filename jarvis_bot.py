@@ -8,18 +8,28 @@ from utils.books_searcher import GoogleBooksSearcher
 from telegram.utils.request import Request
 import json
 
+# Telegram 聊天机器人主程序
+# 功能：集成 ChatGPT 对话和 Google 图书搜索功能
+# 主要流程：
+
+# 读取配置文件
+# 初始化网络连接
+# 设置消息处理器
+# 启动轮询服务
 
 class JatvisBot:
+    """核心机器人类，负责功能整合和消息处理"""
     def __init__(self, config_path):
         # Load config file
         self.config=configparser.ConfigParser()
         self.config.read(config_path)
-        self.chatgpt = HKBU_ChatGPT(self.config)
-        self.books_searcher = GoogleBooksSearcher()
+        self.chatgpt = HKBU_ChatGPT(self.config) # ChatGPT 对话模块
+        self.books_searcher = GoogleBooksSearcher() # 图书搜索模块
 
-        # Telegram updater 
-        self.check_network()
-        self._init_telegram()
+        # 初始化 Telegram 连接
+        self.check_network() # 网络连通性测试
+        self._init_telegram() # 创建机器人实例
+        # 设置消息处理器
         self.updater = Updater(
             bot=self.telegram_chatbot,
             use_context=True
@@ -28,6 +38,7 @@ class JatvisBot:
         self._setup_handlers()
 
     def _init_telegram(self):
+        """配置 Telegram 代理参数"""
         proxy_config = {
             'proxy_url': self.config.get('PROXY', 'url', fallback=None),
             'connect_timeout': 10,
@@ -35,6 +46,7 @@ class JatvisBot:
             'con_pool_size': 20
         } if self.config.getboolean('PROXY', 'enable', fallback=False) else {}
 
+        # 创建带代理配置的 Bot 实例
         request = Request(**proxy_config)
         self.telegram_chatbot = Bot(
             token=self.config['TELEGRAM']['ACCESS_TOKEN'],
@@ -43,31 +55,33 @@ class JatvisBot:
         self._setup_handlers()
    
     def check_network(self):
+        """测试 Telegram API 连通性"""
         response = requests.get(f"https://api.telegram.org/bot{self.config['TELEGRAM']['ACCESS_TOKEN']}/getMe") 
         logger.debug(response.text)
     
     def _setup_handlers(self):
+        """注册消息处理回调函数"""
         self.updater = Updater(bot=self.telegram_chatbot, use_context=True)
         """Register all message handlers"""
         dispatcher = self.updater.dispatcher
         
-        # Command processor
-        dispatcher.add_handler(
+        # 注册 命令处理器
+        dispatcher.add_handler( # 注册 /search
             CommandHandler("search", 
                            self._books_search_handler))
         
-        # Message handler
+        # 注册普通文本消息处理器（排除命令）
         dispatcher.add_handler(MessageHandler(
             Filters.text & (~Filters.command),
             self._chatgpt_handler
         ))
 
     def start(self):
-        """Start up the server"""
+        """启动机器人服务"""
         logger.info("Starting bot...")
-        self.updater.start_polling()
+        self.updater.start_polling()  # 开始轮询消息
         logger.info("Ready!")
-        self.updater.idle()
+        self.updater.idle() # 保持运行状态
 
     # def _add_command_handler(self, update: Update, context: CallbackContext):
     #     """process /add command"""
@@ -82,7 +96,7 @@ class JatvisBot:
     #         update.message.reply_text("usage: /add <keyword>")
 
     def _chatgpt_handler(self, update: Update, context: CallbackContext):
-        """ChatGPT api handler"""
+        """处理普通文本消息（调用 ChatGPT）"""
         user_input = update.message.text
         logger.info(f"Processing ChatGPT request: {user_input}")
         response = self.chatgpt.submit(user_input)
@@ -92,19 +106,25 @@ class JatvisBot:
         )
 
     def _books_search_handler(self, update: Update, context: CallbackContext):
-            """google books search handler"""
+            """处理 /search 命令（图书搜索）"""
             # user_input = update.message.text
             user_input = update.message.text
             user_id = update.effective_user.id
             logger.debug(f"Books searching request: {user_input}")
+
+            # 使用 ChatGPT 提取结构化查询参数
             self.search_prompt = f"请从用户需求提取以下信息(JSON格式), 用户需求: {user_input} \
                格式：{self.books_searcher.query_format}，注意，返回的结果必须我能直接转成dict的"
             extracted = self.chatgpt.submit(self.search_prompt)
             logger.debug(f"Extracted: {extracted}")
+            
+            # 解析并执行图书搜索
             query = parse_json_string(extracted)
             logger.debug(f"query: {query}")
             response = self.books_searcher.search(query)
             logger.debug(f"Response: {response}")
+            
+            # 使用 ChatGPT 整理搜索结果
             self.result_prompt = f"请从下面返回的查询的数据整理出合适的回答(附带超链接), 查询的数据：{response}"
             result = self.chatgpt.submit(self.result_prompt)
             context.bot.send_message(
