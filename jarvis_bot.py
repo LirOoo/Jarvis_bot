@@ -7,6 +7,7 @@ from utils.ChatGPT_HKBU import HKBU_ChatGPT
 from utils.books_searcher import GoogleBooksSearcher
 from telegram.utils.request import Request
 import json
+import redis
 
 # Telegram 聊天机器人主程序
 # 功能：集成 ChatGPT 对话和 Google 图书搜索功能
@@ -23,6 +24,19 @@ class JatvisBot:
         # Load config file
         self.config=configparser.ConfigParser()
         self.config.read(config_path)
+
+        # 初始化 redis
+        self.root_key = self.config["REDIS"]["ROOT_KEY"]
+        self.redis_ins = redis.Redis(
+            host=(self.config['REDIS']['HOST']), 
+            password=(self.config['REDIS']['PASSWORD']), 
+            port=(self.config['REDIS']['REDISPORT']), 
+            decode_responses=(self.config['REDIS']['DECODE_RESPONSE']), 
+            username=(self.config['REDIS']['USER_NAME']))
+        
+        # all_keys = self.redis_ins.keys('*')
+        # logger.debug(f'Redis keys: {all_keys}')
+
         self.chatgpt = HKBU_ChatGPT(self.config) # ChatGPT 对话模块
         self.books_searcher = GoogleBooksSearcher() # 图书搜索模块
 
@@ -116,7 +130,7 @@ class JatvisBot:
             # 使用 ChatGPT 提取结构化查询参数
             self.search_prompt = f"请从用户需求提取以下信息(JSON格式), 用户需求: {user_input} \
                格式：{self.books_searcher.query_format}，注意，返回的结果必须我能直接转成dict的"
-            extracted = self.chatgpt.submit(self.search_prompt)
+            extracted = self.chatgpt.submit(self.search_prompt, user_id)
             logger.debug(f"Extracted: {extracted}")
             
             # 解析并执行图书搜索
@@ -127,7 +141,7 @@ class JatvisBot:
             
             # 使用 ChatGPT 整理搜索结果
             self.result_prompt = f"请从下面返回的查询的数据整理出合适的回答(附带超链接), 查询的数据：{response}"
-            result = self.chatgpt.submit(self.result_prompt)
+            result = self.chatgpt.submit(self.result_prompt, user_id)
             context.bot.send_message(
                 chat_id=user_id,
                 text=result
