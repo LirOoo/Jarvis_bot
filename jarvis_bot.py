@@ -98,8 +98,9 @@ class JatvisBot:
     def _chatgpt_handler(self, update: Update, context: CallbackContext):
         """处理普通文本消息（调用 ChatGPT）"""
         user_input = update.message.text
+        user_id = update.effective_user.id  # 获取用户唯一ID
         logger.info(f"Processing ChatGPT request: {user_input}")
-        response = self.chatgpt.submit(user_input)
+        response = self.chatgpt.submit(user_input, user_id)
         context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=response
@@ -131,7 +132,6 @@ class JatvisBot:
                 chat_id=user_id,
                 text=result
             )
-    
     
 
 def parse_json_string(json_str):

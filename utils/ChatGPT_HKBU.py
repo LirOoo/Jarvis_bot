@@ -1,6 +1,6 @@
 import configparser
 import requests
-
+from loguru import logger
 
 class HKBU_ChatGPT():
     """封装 ChatGPT 请求的专用类"""
@@ -14,15 +14,18 @@ class HKBU_ChatGPT():
             self.config.read(config_)
         elif type(config_) == configparser.ConfigParser:
             self.config = config_
+        self.user_conversations = {}  # 格式: {user_id: [messages]}
 
-    def submit(self, message):
+    def submit(self, message, user_id):
         """提交消息到 ChatGPT API
         参数：
             message - 用户输入的文本
         返回：
             ChatGPT 生成的回复内容
         """
-        conversation = [{"role": "user", "content": message}]
+        if user_id not in self.user_conversations:
+            self.user_conversations[user_id] = []
+        self.user_conversations[user_id].append({"role": "user", "content": message})
         # 构造 API 请求 URL
         url = (self.config['CHATGPT']['BASICURL']) + \
         "/deployments/" + (self.config['CHATGPT']['MODELNAME']) + \
@@ -30,17 +33,21 @@ class HKBU_ChatGPT():
         (self.config['CHATGPT']['APIVERSION'])
 
         # 设置请求头和载荷
-        headers = { 'Content-Type': 'application/json',
-        'api-key': (self.config['CHATGPT']['ACCESS_TOKEN']) }
-        payload = { 'messages': conversation }
-
+        headers = { 'Content-Type': 'application/json', 'api-key': (self.config['CHATGPT']['ACCESS_TOKEN']) }
+        
         # 发送 POST 请求
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json={"messages": self.user_conversations[user_id]}, headers=headers)
+        logger.debug(f"conversations: {self.user_conversations[user_id]}")
         if response.status_code == 200:
             data = response.json()
-            return data['choices'][0]['message']['content']
+            assistant_response = data['choices'][0]['message']['content']
+            self.user_conversations[user_id].append({
+                "role": "assistant",
+                "content": assistant_response  # 这里存储文本内容而非response对象
+            })
+            return assistant_response
         else:
-            return 'Error:', response
+            return f'Error: API request failed with status code {response.status_code}'
         
 if __name__ == '__main__':
     ChatGPT_test = HKBU_ChatGPT()
