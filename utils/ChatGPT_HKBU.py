@@ -2,7 +2,7 @@ import configparser
 import requests
 from loguru import logger
 from utils.redis_manager import RedisManager
-from utils.user_info import UserInfo
+from utils.user_info import UserInfo, UsersManager
 
 class HKBU_ChatGPT():
     """封装 ChatGPT 请求的专用类"""
@@ -18,7 +18,7 @@ class HKBU_ChatGPT():
             self.config = config_
         self.root_key = self.config["REDIS"]["ROOT_KEY"]
         self.redis_manager = RedisManager(self.config)  # Redis 连接管理器
-        self.users_maneger = {}
+        self.users_maneger = UsersManager(self.config)
 
     def submit(self, message, user_id):
         """提交消息到 ChatGPT API
@@ -40,11 +40,14 @@ class HKBU_ChatGPT():
 
         # 设置请求头和载荷
         headers = { 'Content-Type': 'application/json', 'api-key': (self.config['CHATGPT']['ACCESS_TOKEN']) }
-        if user_id not in self.users_maneger:
+        logger.debug(self.users_maneger.user_info_dict.keys())
+        logger.debug(f"User_id: {user_id}, {type(user_id)}")
+        if user_id not in self.users_maneger.user_info_dict.keys():
             user_info = UserInfo(self.config, user_id)
-            self.users_maneger[user_id] = user_info
+            self.users_maneger.user_info_dict[user_id] = user_info
+            logger.debug(f"User {user_id} info created.")
 
-        user_info = self.users_maneger[user_id]
+        user_info = self.users_maneger.user_info_dict[user_id]
         user_info.add_conversation({"role": "user", "content": message})
         # 发送 POST 请求
         massage_with_context = user_info.get_conversations()

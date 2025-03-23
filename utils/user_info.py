@@ -1,5 +1,36 @@
 from utils.redis_manager import RedisManager
 import json
+from loguru import logger
+
+class UsersManager():
+    _instance = None
+
+    def __new__(cls, config=None):
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+            cls._instance.init_users_manager(config)
+        return cls._instance
+    
+    def init_users_manager(self, config=None):
+        self.root_key = config["REDIS"]["ROOT_KEY"]
+        self.redis = RedisManager(config)
+        pattern = f"{self.root_key}:*"  # 构造匹配模式
+        self.user_info_dict = {}
+        for key in self.redis.redis_conn.scan_iter(match=pattern):
+            try:
+                # 示例键结构: "root_key:123:conversations" 或 "root_key:456:profile"
+                key_str = key
+                parts = key_str.split(':')
+                
+                # 确保至少包含 root_key 和 user_id 两部分
+                if len(parts) >= 2:
+                    user_id = parts[1]
+                    user_info = UserInfo(config, user_id)
+                    self.user_info_dict[user_id] = user_info
+            except Exception as e:
+                logger.error(f"解析键 {key} 时出错: {str(e)}")
+                continue
+        
 
 class UserInfo(object):
     def __init__(self, config, user_id):

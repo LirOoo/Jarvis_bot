@@ -7,7 +7,6 @@ class RedisManager:
     _instance = None
 
     def __new__(cls, config=None):
-        cls.root_key = config["REDIS"]["ROOT_KEY"]
         if not cls._instance:
             cls._instance = super().__new__(cls)
             cls._instance.init_redis(config)
@@ -16,6 +15,7 @@ class RedisManager:
 
     def init_redis(self, config):
         """初始化 Redis 连接"""
+        self.root_key = config["REDIS"]["ROOT_KEY"]
         self.root_key = config["REDIS"]["ROOT_KEY"]
         self.redis_conn = redis.Redis(
             host=config['REDIS']['HOST'],
@@ -31,4 +31,4 @@ class RedisManager:
         else:
             # 获取所有以 root_key 开头的键（注意：需要调整实际存储结构）
             all_keys = self.redis_conn.keys(f"{self.root_key}:*")
-            logger.info(f"Redis connected. Found {len(all_keys)} keys under '{self.root_key}'")
+            logger.info(f"Redis connected. Found {len(all_keys)} keys under '{self.root_key}': {all_keys}")
