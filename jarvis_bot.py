@@ -12,6 +12,7 @@ import redis
 import sys
 from gensim.models import Word2Vec
 from sklearn.metrics.pairwise import cosine_similarity
+import os
 
 # Telegram 聊天机器人主程序
 # 功能：集成 ChatGPT 对话和 Google 图书搜索功能
@@ -110,6 +111,10 @@ class JatvisBot:
     def start(self):
         """启动机器人服务"""
         logger.info("Starting bot...")
+
+        # 获取端口，默认为 8080
+        port = int(os.environ.get("PORT", 8080))
+
         self.updater.start_polling()  # 开始轮询消息
         logger.info("Ready!")
         self.updater.idle() # 保持运行状态
