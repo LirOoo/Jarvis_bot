@@ -40,11 +40,8 @@ class HKBU_ChatGPT():
 
         # 设置请求头和载荷
         headers = { 'Content-Type': 'application/json', 'api-key': (self.config['CHATGPT']['ACCESS_TOKEN']) }
-        logger.debug(self.users_maneger.user_info_dict.keys())
-        logger.debug(f"User_id: {user_id}, {type(user_id)}")
         if user_id not in self.users_maneger.user_info_dict.keys():
-            user_info = UserInfo(self.config, user_id)
-            self.users_maneger.user_info_dict[user_id] = user_info
+            self.users_maneger.user_info_dict[user_id] = UserInfo(self.config, user_id)
             logger.debug(f"User {user_id} info created.")
 
         user_info = self.users_maneger.user_info_dict[user_id]

@@ -3,6 +3,7 @@ import json
 from typing import Dict, List, Optional
 from loguru import logger
 
+# 不宜重复建立多个Radis连接，故该类设计为单例模式。
 class RedisManager:
     _instance = None
 
