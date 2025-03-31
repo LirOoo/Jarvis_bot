@@ -107,12 +107,14 @@ class JatvisBot:
                 self._handle_add_friend, 
                 pattern="add_friend_"))
 
-    def start(self):
-        """启动机器人服务"""
-        logger.info("Starting bot...")
-        self.updater.start_polling()  # 开始轮询消息
-        logger.info("Ready!")
-        self.updater.idle() # 保持运行状态
+    def start(self, webhook_url=None):
+        if webhook_url:
+            self.telegram_chatbot.set_webhook(url=webhook_url)
+            logger.info(f"Webhook set to {webhook_url}")
+        else:
+            self.updater.start_polling()
+            logger.info("Polling mode started (not for Cloud Run)")
+            self.updater.idle()
 
     def _chatgpt_handler(self, update: Update, context: CallbackContext):
         """处理普通文本消息（调用 ChatGPT）"""
