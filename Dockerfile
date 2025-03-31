@@ -1,5 +1,5 @@
-# 使用轻量的 Python 3.12 镜像
-FROM python:3.12-slim
+# 使用轻量的 Python 3.10 镜像
+FROM python:3.10-slim
 
 # 设置环境变量
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -25,4 +25,4 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 启动 bot 程序
-CMD ["python", "jarvis_bot.py"]
+CMD ["python", "main.py"]
