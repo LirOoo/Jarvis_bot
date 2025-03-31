@@ -22,8 +22,7 @@ WORKDIR /app
 COPY . /app
 
 # 安装 pip 包
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 启动 bot 程序
 CMD ["python", "jarvis_bot.py"]
