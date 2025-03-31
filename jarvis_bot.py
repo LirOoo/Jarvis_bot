@@ -314,5 +314,6 @@ if __name__=='__main__':
     logger.add(sys.stdout, level="DEBUG")  # 设置终端日志等级为 INFO
     logger.add("logfile.log", level="DEBUG", rotation="200 MB", compression="zip")  # 当文件超过 500 MB 时会进行滚动，并且压缩旧日志
     logger.info("*"*50+"All starting"+"*"*50)
+
     bot = JatvisBot('config.ini')
     bot.start()
