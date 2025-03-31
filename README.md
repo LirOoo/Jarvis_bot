@@ -7,4 +7,13 @@ python==3.10
 pip install -r requirements.txt
 
 ## Start up
+
 jarvis_bot.py
+
+## serach books you want
+/search {what you want to search}
+## set username
+/set_username {username}  
+## recommend person who have the same interest with you
+/recommand 
+
