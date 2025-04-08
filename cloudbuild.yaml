@@ -1,0 +1,16 @@
+steps:
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "SERVICE_NAME"             # 替换为你的服务名称，如 jarvis-bot
+      - "--image"
+      - "gcr.io/$PROJECT_ID/SERVICE_NAME"
+      - "--region"
+      - "asia-east2"              # 替换为你的区域
+      - "--platform"
+      - "managed"
+      - "--port"
+      - "8080"
+      - "--allow-unauthenticated"  
