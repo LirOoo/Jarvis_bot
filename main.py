@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 # 初始化 Bot 实例（只初始化一次）
 bot = JatvisBot("config.ini")
-bot.start("https://jatvisbot-36623340325.asia-east1.run.app/webhook")  # ✅ 注册 Webhook
+bot.start("https://jarvis-bot-520547938033.asia-east2.run.app/webhook")  # ✅ 注册 Webhook
 dispatcher = bot.updater.dispatcher
 
 @app.route("/")
